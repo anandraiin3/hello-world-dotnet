@@ -43,7 +43,7 @@ A Docker image for this application is also available on GitHub Container Regist
 $ docker pull ghcr.io/liatrio/hello-world-dotnet:latest
 ```
 
-Similar to the instructions above, this can be ran locally like this:
+Similar to the instructions above , this can be ran locally like this:
 
 ```bash
 $ docker run -it --rm -e ASPNETCORE_URLS=http://+:5000 -e ASPNETCORE_ENVIRONMENT=Development -p 5000:5000 ghcr.io/liatrio/hello-world-dotnet:latest
