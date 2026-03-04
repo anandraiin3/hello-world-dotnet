@@ -16,7 +16,7 @@ From the `hello-world-dotnet` subdirectory, run:
 
 ```bash
 $ docker build . -t hello-world-dotnet:latest
-$ docker run -it --rm -e ASPNETCORE_URLS=http://+:5000 -e ASPNETCORE_ENVIRONMENT=Development -p 5000:5000 hello-world-dotnet:latest
+$ docker run -it --rm -e ASPNETCORE_URLS=http://+:80 -e ASPNETCORE_ENVIRONMENT=Development -p 80:80 hello-world-dotnet:latest
 ```
 
 ### Docker Compose
@@ -32,7 +32,7 @@ $ docker-compose up --build
 This application serves a simple JSON payload at the root directory:
 
 ```bash
-$ curl http://localhost:5000
+$ curl http://localhost:80
 ```
 
 ## Pulling from the Registry
@@ -46,5 +46,5 @@ $ docker pull ghcr.io/liatrio/hello-world-dotnet:latest
 Similar to the instructions above , this can be ran locally like this:
 
 ```bash
-$ docker run -it --rm -e ASPNETCORE_URLS=http://+:5000 -e ASPNETCORE_ENVIRONMENT=Development -p 5000:5000 ghcr.io/liatrio/hello-world-dotnet:latest
+$ docker run -it --rm -e ASPNETCORE_URLS=http://+:80 -e ASPNETCORE_ENVIRONMENT=Development -p 80:80 ghcr.io/liatrio/hello-world-dotnet:latest
 ```

@@ -1,4 +1,5 @@
 using System;
+using Microsoft.AspNetCore.Hosting;
 using hello_world_dotnet;
 using Xunit;
 
@@ -6,6 +7,18 @@ namespace hello_world_dotnet.Tests
 {
     public class HelloWorldTests
     {
+        [Fact]
+        public void ConfigureWebHost_SetsPort80HttpBinding()
+        {
+            var webHostBuilder = new WebHostBuilder();
+
+            Program.ConfigureWebHost(webHostBuilder);
+
+            var serverUrls = webHostBuilder.GetSetting(WebHostDefaults.ServerUrlsKey);
+            Assert.Equal(Program.HttpBindingUrl, serverUrls);
+            Assert.Contains(":80", serverUrls);
+        }
+
         [Fact]
         public void Message_CanBeSetAndRetrieved()
         {

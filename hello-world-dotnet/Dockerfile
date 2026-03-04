@@ -13,4 +13,5 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/bin .
+EXPOSE 80
 ENTRYPOINT ["dotnet", "Release/net5.0/hello-world-dotnet.dll"]
