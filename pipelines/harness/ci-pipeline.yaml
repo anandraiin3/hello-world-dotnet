@@ -1,0 +1,179 @@
+pipeline:
+  name: hello-world-dotnet CI
+  identifier: hello_world_dotnet_CI
+  orgIdentifier: default
+  projectIdentifier: REPLACE_PROJECT_ID
+  tags:
+    app: hello-world-dotnet
+  stages:
+    ##########################################################################
+    # STAGE 1 — Build, Test & AI Code Quality
+    ##########################################################################
+    - stage:
+        name: Build
+        identifier: Build
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              # ── Unit Tests ────────────────────────────────────────────────
+              - step:
+                  type: Run
+                  name: Unit Tests
+                  identifier: Unit_Tests
+                  spec:
+                    connectorRef: account.Dockerhub
+                    image: mcr.microsoft.com/dotnet/sdk:8.0
+                    shell: Sh
+                    command: |
+                      dotnet test tests/hello-world-dotnet.Tests/hello-world-dotnet.Tests.csproj \
+                        --configuration Release \
+                        --logger trx \
+                        --results-directory /harness/test-results
+                  when:
+                    stageStatus: Success
+
+              # ── Docker Build & Push ───────────────────────────────────────
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build and Push Image
+                  identifier: Build_and_Push_Image
+                  spec:
+                    connectorRef: account.Dockerhub
+                    repo: <+pipeline.variables.DOCKER_REPO>
+                    tags:
+                      - <+pipeline.sequenceId>
+                      - latest
+                    dockerfile: deploy/docker/Dockerfile
+                    # Context is repo root so Dockerfile can reference src/
+                    context: .
+                  when:
+                    stageStatus: Success
+
+              # ── AI Code Quality Gate ──────────────────────────────────────
+              - stepGroup:
+                  name: Code Quality Checks
+                  identifier: Code_Quality_Checks
+                  steps:
+                    - step:
+                        type: Plugin
+                        name: AI Code Quality Check
+                        identifier: AI_Code_Quality_Check
+                        spec:
+                          connectorRef: account.Dockerhub
+                          image: anandraiin3/harness-code-quality:latest
+                          privileged: false
+                          settings:
+                            llm_provider: anthropic
+                            api_key: <+secrets.getValue("org.ANTHROPIC_API_KEY")>
+                            model: claude-haiku-4-5-20251001
+                            prompt_preset: standard
+                            scan_paths: src/hello-world-dotnet
+                            file_extensions: cs
+                            max_files: "30"
+                            timeout_seconds: "180"
+                            fail_on_critical: "false"
+                            fail_on_severity: high
+                            min_overall_score: "6"
+                            min_security_score: "7"
+                            min_reliability_score: "7"
+                            min_maintainability_score: "6"
+                            min_performance_score: "6"
+                          outputVariables:
+                            - name: PROMPT_PRESET
+                            - name: OVERALL_SCORE
+                            - name: MAINTAINABILITY_SCORE
+                            - name: SECURITY_SCORE
+                            - name: PERFORMANCE_SCORE
+                            - name: RELIABILITY_SCORE
+                            - name: TESTABILITY_SCORE
+                            - name: COMPLEXITY_SCORE
+                            - name: DUPLICATION_SCORE
+                            - name: CODE_SMELLS
+                            - name: CRITICAL_ISSUES
+                            - name: SEVERITY
+                            - name: DEBT_HOURS_ESTIMATE
+                            - name: FINDINGS_COUNT
+                            - name: TOP_FINDING
+                            - name: TOP_RECOMMENDATION
+                            - name: SUMMARY
+                        when:
+                          stageStatus: Success
+                          condition: <+codebase.prNumber> == null || <+codebase.targetBranch> != "main"
+                    - step:
+                        type: Plugin
+                        name: AI Code Quality Full Audit
+                        identifier: AI_Code_Quality_Full_Audit
+                        spec:
+                          connectorRef: account.Dockerhub
+                          image: anandraiin3/harness-code-quality:latest
+                          privileged: false
+                          settings:
+                            llm_provider: anthropic
+                            api_key: <+secrets.getValue("org.ANTHROPIC_API_KEY")>
+                            model: claude-sonnet-4-6
+                            prompt_preset: full-audit
+                            scan_paths: src/hello-world-dotnet
+                            file_extensions: cs
+                            max_files: "30"
+                            max_chars: "200000"
+                            timeout_seconds: "300"
+                            fail_on_critical: "true"
+                            fail_on_severity: high
+                            min_overall_score: "6"
+                            min_security_score: "7"
+                            min_reliability_score: "7"
+                            min_maintainability_score: "6"
+                            min_performance_score: "6"
+                            min_testability_score: "5"
+                            min_complexity_score: "5"
+                            min_duplication_score: "6"
+                          outputVariables:
+                            - name: PROMPT_PRESET
+                            - name: OVERALL_SCORE
+                            - name: MAINTAINABILITY_SCORE
+                            - name: SECURITY_SCORE
+                            - name: PERFORMANCE_SCORE
+                            - name: RELIABILITY_SCORE
+                            - name: TESTABILITY_SCORE
+                            - name: COMPLEXITY_SCORE
+                            - name: DUPLICATION_SCORE
+                            - name: CODE_SMELLS
+                            - name: CRITICAL_ISSUES
+                            - name: SEVERITY
+                            - name: DEBT_HOURS_ESTIMATE
+                            - name: FINDINGS_COUNT
+                            - name: TOP_FINDING
+                            - name: TOP_RECOMMENDATION
+                            - name: SUMMARY
+                        when:
+                          stageStatus: Success
+                          condition: <+codebase.prNumber> != null && <+codebase.targetBranch> == "main"
+                  when:
+                    stageStatus: Success
+
+  ##############################################################################
+  # Pipeline-level variables
+  ##############################################################################
+  variables:
+    - name: DOCKER_REPO
+      type: String
+      description: "Docker image repository (e.g. anandraiin3/hello-world-dotnet)"
+      value: anandraiin3/hello-world-dotnet
+
+  ##############################################################################
+  # Codebase — update connectorRef to your SCM connector
+  ##############################################################################
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.GitHub
+        repoName: hello-world-dotnet
+        build: <+input>

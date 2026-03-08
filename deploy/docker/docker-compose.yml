@@ -1,0 +1,12 @@
+version: "3"
+services:
+  app:
+    build:
+      # Context is repo root so the Dockerfile can reference src/
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      ASPNETCORE_URLS: "http://+:80"
+      ASPNETCORE_ENVIRONMENT: "Development"

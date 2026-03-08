@@ -1,0 +1,12 @@
+# Production environment overrides for hello-world Helm chart.
+# Applied on top of values.yaml:
+#   helm upgrade --install custom-hello ./deploy/k8s/helm/hello-world \
+#     -f deploy/k8s/helm/hello-world/values.yaml \
+#     -f deploy/k8s/helm/hello-world/values.production.yaml \
+#     --namespace production
+
+replicaCount: 4
+
+podAnnotations:
+  oneagent.dynatrace.com/inject: "true"
+  oneagent.dynatrace.com/tags: "app:hello-world-dotnet,env:production,team:platform"

@@ -1,8 +1,8 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hello-world-dotnet", "hello-world-dotnet\hello-world-dotnet.csproj", "{01DFB105-EE0A-44B3-95A8-5C762CF9C944}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hello-world-dotnet", "src\hello-world-dotnet\hello-world-dotnet.csproj", "{01DFB105-EE0A-44B3-95A8-5C762CF9C944}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hello-world-dotnet.Tests", "hello-world-dotnet.Tests\hello-world-dotnet.Tests.csproj", "{A2E8F206-1B3C-4D5E-9F70-8A1B2C3D4E5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hello-world-dotnet.Tests", "tests\hello-world-dotnet.Tests\hello-world-dotnet.Tests.csproj", "{A2E8F206-1B3C-4D5E-9F70-8A1B2C3D4E5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

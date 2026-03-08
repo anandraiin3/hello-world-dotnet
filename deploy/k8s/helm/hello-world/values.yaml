@@ -1,0 +1,43 @@
+# Default values for hello-world.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 4
+
+# Application name used by Dynatrace for service discovery and naming.
+# Dynatrace reads the pod label 'app' to identify and group processes into services.
+appName: hello-world-dotnet
+
+image:
+  repository: <+artifacts.primary.image>
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: "custom-hello"
+
+# Pod-level annotations applied to every pod in the deployment.
+# Dynatrace Operator reads these to control OneAgent injection and metadata.
+podAnnotations:
+  # Force OneAgent code module injection for this pod.
+  # With Dynatrace Operator (CloudNativeFullStack / ClassicFullStack), injection
+  # is on by default for all namespaces. Set to "false" to opt out of a namespace.
+  oneagent.dynatrace.com/inject: "true"
+  # Custom metadata tags attached to the Dynatrace service entity.
+  # Visible in Dynatrace under the service's Properties & Tags.
+  # Useful for filtering in Dynatrace dashboards and for Harness CV queries.
+  oneagent.dynatrace.com/tags: "app:hello-world-dotnet,env:production,team:platform"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80

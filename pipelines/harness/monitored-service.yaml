@@ -1,0 +1,184 @@
+##############################################################################
+# Harness Continuous Verification — Monitored Service
+# Application : hello-world-dotnet  (ASP.NET Core 8, Kubernetes)
+# Health Source: Dynatrace APM (SaaS)
+#
+# HOW TO USE
+# ----------
+# 1. In Harness UI: Service Reliability → Monitored Services → + New → Import YAML
+#    OR apply via Harness API / Terraform provider.
+#
+# 2. Fill in the four REPLACE_ME placeholders below before importing:
+#
+#    REPLACE_CONNECTOR_REF
+#      The identifier of your Dynatrace connector in Harness.
+#      Create it at:  Account/Org/Project Settings → Connectors → + New Connector
+#                     → Monitoring & Logging → Dynatrace
+#      Required fields in connector:
+#        URL   : https://<your-env-id>.live.dynatrace.com
+#        API Token permissions needed:
+#          - metrics.read          (Metrics API v2 — read metric data)
+#          - entities.read         (Topology & Smartscape — list service entities)
+#          - DataExport            (deprecated token scope, include for compatibility)
+#
+#    REPLACE_HARNESS_SERVICE_ID
+#      The identifier of the Harness Service this app is deployed as.
+#      Typically matches what your CD pipeline deploys (e.g. HelloWorldDotNet).
+#
+#    REPLACE_HARNESS_ENV_ID
+#      The identifier of the Harness Environment (e.g. production, staging).
+#
+#    REPLACE_DT_SERVICE_ENTITY_ID
+#      The Dynatrace service entity ID in the form SERVICE-XXXXXXXXXXXX.
+#      Find it:
+#        Dynatrace UI → Services → <your service> → "..." menu → Copy entity ID
+#        OR via API: GET https://<env>.live.dynatrace.com/api/v2/entities
+#                         ?entitySelector=type(SERVICE),tag(app:hello-world-dotnet)
+#
+#    REPLACE_DT_SERVICE_NAME
+#      The display name of the service as shown in Dynatrace Services UI.
+#      After Dynatrace OneAgent instruments the pod it will auto-detect the
+#      .NET process and name the service — typically "hello-world-dotnet"
+#      or the executable name. Confirm in Dynatrace UI before importing.
+##############################################################################
+
+monitoredService:
+  orgIdentifier: default
+  projectIdentifier: REPLACE_HARNESS_PROJECT_ID
+  identifier: HelloWorldDotNet_production
+  name: HelloWorldDotNet - Production
+  type: Application
+  serviceRef: REPLACE_HARNESS_SERVICE_ID
+  environmentRef: REPLACE_HARNESS_ENV_ID
+  tags:
+    app: hello-world-dotnet
+    team: platform
+  sources:
+    healthSources:
+      - name: Dynatrace APM
+        identifier: Dynatrace_APM
+        type: Dynatrace
+        spec:
+          connectorRef: REPLACE_CONNECTOR_REF
+          feature: Dynatrace APM
+          serviceId: REPLACE_DT_SERVICE_ENTITY_ID
+          serviceName: REPLACE_DT_SERVICE_NAME
+
+          metricDefinitions:
+
+            ##################################################################
+            # METRIC 1 — Response Time (P90)
+            # Category  : Performance
+            # Why        : Most direct signal for user-facing degradation.
+            #              A new deployment that introduces a slow code path
+            #              or an unoptimised query will show here within 5 min.
+            # Units      : microseconds (Dynatrace native); displayed as ms
+            #              in Harness after ÷1000.
+            # Threshold  : Harness ML baseline; no manual threshold needed
+            #              for the first few deployments (auto-adaptive).
+            ##################################################################
+            - identifier: response_time_p90
+              metricName: Response Time (P90)
+              riskProfile:
+                category: Performance
+                metricType: RESP_TIME
+                thresholdTypes:
+                  - ACT_WHEN_HIGHER
+              analysis:
+                liveMonitoring:
+                  enabled: true
+                deploymentVerification:
+                  enabled: true
+                  serviceInstanceFieldName: entity_name
+              sli:
+                enabled: true
+              metricSelector: "builtin:service.response.time:percentile(90)"
+
+            ##################################################################
+            # METRIC 2 — Error Rate
+            # Category  : Errors
+            # Why        : Zero-tolerance signal — any regression in the error
+            #              rate after a new version ships is an immediate flag.
+            #              The intentional /insecure-sql endpoint in this app
+            #              makes it easy to drive errors for demo purposes.
+            # Units      : percentage (0–100)
+            # Threshold  : Fail Immediately if error rate > 5% in the
+            #              verification window (configurable below).
+            ##################################################################
+            - identifier: error_rate
+              metricName: Error Rate
+              riskProfile:
+                category: Errors
+                metricType: ERROR
+                thresholdTypes:
+                  - ACT_WHEN_HIGHER
+              analysis:
+                liveMonitoring:
+                  enabled: true
+                deploymentVerification:
+                  enabled: true
+                  serviceInstanceFieldName: entity_name
+              sli:
+                enabled: true
+              metricSelector: "builtin:service.errors.total.rate"
+
+            ##################################################################
+            # METRIC 3 — Throughput (Requests per Minute)
+            # Category  : Performance
+            # Why        : Guards against traffic drops caused by bad
+            #              readiness probes, crash-loop pods, or a broken
+            #              release that stops serving requests.
+            #              Also provides the denominator context for the
+            #              error rate above.
+            # Units      : requests / minute
+            ##################################################################
+            - identifier: throughput
+              metricName: Throughput (Requests/min)
+              riskProfile:
+                category: Performance
+                metricType: THROUGHPUT
+                thresholdTypes:
+                  - ACT_WHEN_LOWER
+              analysis:
+                liveMonitoring:
+                  enabled: true
+                deploymentVerification:
+                  enabled: true
+                  serviceInstanceFieldName: entity_name
+              sli:
+                enabled: false
+              metricSelector: "builtin:service.requestCount.total"
+
+            ##################################################################
+            # METRIC 4 — .NET CLR Exception Count
+            # Category  : Errors
+            # Why        : Catches unhandled exceptions that don't surface as
+            #              HTTP 5xx errors (background workers, async faults).
+            #              Good secondary signal alongside error rate.
+            # Units      : count per minute
+            # Note       : Only available if Dynatrace OneAgent instruments
+            #              the process. If this metric is missing in Dynatrace,
+            #              remove this definition.
+            ##################################################################
+            - identifier: dotnet_exceptions
+              metricName: .NET Exception Count
+              riskProfile:
+                category: Errors
+                metricType: ERROR
+                thresholdTypes:
+                  - ACT_WHEN_HIGHER
+              analysis:
+                liveMonitoring:
+                  enabled: true
+                deploymentVerification:
+                  enabled: true
+                  serviceInstanceFieldName: entity_name
+              sli:
+                enabled: false
+              metricSelector: "builtin:tech.dotnet.exceptions.count"
+
+  ##############################################################################
+  # Change Impact Sources (optional — adds deployment markers to Dynatrace)
+  # Leave empty for initial demo; add Harness CD as a change source later.
+  ##############################################################################
+  dependencies: []
