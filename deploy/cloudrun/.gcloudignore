@@ -1,0 +1,16 @@
+# Files to exclude from gcloud builds (mirrors .dockerignore)
+.gcloudignore
+.git
+.gitignore
+**/.gitignore
+**/.DS_Store
+
+# Test projects
+tests/
+
+# Local dev files
+deploy/docker/docker-compose.yml
+**/*.user
+**/*.suo
+**/bin/
+**/obj/
