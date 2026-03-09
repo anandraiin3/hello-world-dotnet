@@ -4,6 +4,9 @@
 
 replicaCount: 4
 
+containerPort: 8080
+aspnetEnvironment: Production
+
 # Application name used by Dynatrace for service discovery and naming.
 # Dynatrace reads the pod label 'app' to identify and group processes into services.
 appName: hello-world-dotnet
@@ -40,4 +43,4 @@ serviceAccount:
 
 service:
   type: ClusterIP
-  port: 80
+  port: 8080

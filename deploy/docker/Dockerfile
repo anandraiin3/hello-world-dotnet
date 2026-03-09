@@ -11,8 +11,12 @@ RUN dotnet publish src/hello-world-dotnet/hello-world-dotnet.csproj -c Release -
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
-WORKDIR /usr/src/app
+WORKDIR /app
+
+# Cloud Run requires the container to listen on PORT (set automatically to 8080).
+# Program.cs reads PORT env var; setting it here ensures local docker runs also work.
+ENV PORT=8080
+EXPOSE 8080
 
 COPY --from=builder /app/publish .
-EXPOSE 80
 ENTRYPOINT ["dotnet", "hello-world-dotnet.dll"]
