@@ -8,15 +8,28 @@ namespace hello_world_dotnet.Tests
     public class HelloWorldTests
     {
         [Fact]
-        public void ConfigureWebHost_SetsPort80HttpBinding()
+        public void ConfigureWebHost_UsesPortEnvVar_DefaultsTo8080()
         {
+            Environment.SetEnvironmentVariable("PORT", null);
             var webHostBuilder = new WebHostBuilder();
 
             Program.ConfigureWebHost(webHostBuilder);
 
             var serverUrls = webHostBuilder.GetSetting(WebHostDefaults.ServerUrlsKey);
-            Assert.Equal(Program.HttpBindingUrl, serverUrls);
-            Assert.Contains(":80", serverUrls);
+            Assert.Contains(":8080", serverUrls);
+        }
+
+        [Fact]
+        public void ConfigureWebHost_RespectsPortEnvVar()
+        {
+            Environment.SetEnvironmentVariable("PORT", "9090");
+            var webHostBuilder = new WebHostBuilder();
+
+            Program.ConfigureWebHost(webHostBuilder);
+
+            var serverUrls = webHostBuilder.GetSetting(WebHostDefaults.ServerUrlsKey);
+            Assert.Contains(":9090", serverUrls);
+            Environment.SetEnvironmentVariable("PORT", null);
         }
 
         [Fact]
