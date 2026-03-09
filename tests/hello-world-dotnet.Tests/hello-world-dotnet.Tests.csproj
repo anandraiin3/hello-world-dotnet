@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\hello-world-dotnet\hello-world-dotnet.csproj" />
+        <ProjectReference Include="..\..\src\hello-world-dotnet\hello-world-dotnet.csproj" />
     </ItemGroup>
 
 </Project>
