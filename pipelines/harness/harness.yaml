@@ -12,7 +12,10 @@ pipeline:
       properties:
         ci:
           codebase:
-            build: <+input>
+            build:
+              spec:
+                branch: main
+              type: branch
       stages:
         - stage:
             identifier: Build
@@ -52,6 +55,6 @@ pipeline:
                               instanceSelection:
                                 type: Count
                                 spec:
-                                  count: <+input>
+                                  count: 3
             delegateSelectors:
               - helm-delegate-sandpit
