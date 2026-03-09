@@ -19,6 +19,7 @@ pipeline:
             type: CI
             spec:
               infrastructure:
+                type: KubernetesDirect
                 spec:
                   connectorRef: AKSSandpitConnector
                   namespace: default
@@ -39,5 +40,18 @@ pipeline:
                 environmentRef: AKSSandpit2
                 infrastructureDefinitions:
                   - identifier: AKSSandpit2
+              execution:
+                steps:
+                  - stepGroup:
+                      identifier: Canary_Deployment
+                      steps:
+                        - step:
+                            identifier: K8sCanaryDeploy
+                            type: K8sCanaryDeploy
+                            spec:
+                              instanceSelection:
+                                type: Count
+                                spec:
+                                  count: <+input>
             delegateSelectors:
               - helm-delegate-sandpit
